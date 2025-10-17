@@ -13,7 +13,6 @@
       --gris-claro: #e0e0e0;
       --rojo: #d32f2f;
     }
-
     body {
       font-family: Arial, sans-serif;
       background: var(--gris-oscuro);
@@ -22,7 +21,6 @@
       justify-content: center;
       padding: 30px;
     }
-
     .container {
       background: var(--verde-bet);
       padding: 25px 30px;
@@ -32,22 +30,20 @@
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
       border: 2px solid var(--amarillo-bet);
     }
-
     h1 {
       text-align: center;
       color: var(--amarillo-bet);
       margin-bottom: 25px;
       font-size: 1.6rem;
     }
-
     label {
       display: block;
       margin-top: 15px;
       font-weight: bold;
       color: var(--gris-claro);
     }
-
-    input[type="number"] {
+    input[type="number"],
+    input[type="text"] {
       width: 100%;
       padding: 10px 12px;
       margin-top: 6px;
@@ -57,7 +53,6 @@
       background: #f0f0f0;
       color: #222;
     }
-
     .result {
       margin-top: 25px;
       background: #fff;
@@ -66,29 +61,23 @@
       border-radius: 8px;
       font-size: 1.1rem;
     }
-
     .row {
       margin-top: 12px;
     }
-
     .highlight {
       font-weight: bold;
     }
-
     .verde {
       color: var(--verde-claro);
     }
-
     .rojo {
       color: var(--rojo);
     }
-
     .mensaje {
       font-weight: bold;
       margin-top: 15px;
       font-size: 1rem;
     }
-
     button {
       margin-top: 20px;
       width: 100%;
@@ -102,9 +91,14 @@
       cursor: pointer;
       transition: background 0.3s ease;
     }
-
     button:hover {
       background: #e0b000;
+    }
+    .cuota-display {
+      font-size: 0.9rem;
+      color: var(--gris-claro);
+      margin-top: 4px;
+      font-style: italic;
     }
   </style>
 </head>
@@ -112,11 +106,19 @@
   <div class="container">
     <h1>Calculadora exortipster</h1>
 
-    <label for="cuota1">Momio Casa 1</label>
-    <input type="number" id="cuota1" min="0.01" step="any" value="2.90" />
+    <label for="equipo1">Equipo 1</label>
+    <input type="text" id="equipo1" placeholder="Nombre del Equipo 1" />
 
-    <label for="cuota2">Momio Casa 2</label>
-    <input type="number" id="cuota2" min="0.01" step="any" value="1.63" />
+    <label for="cuota1">Momio Casa 1 (Americano)</label>
+    <input type="number" id="cuota1" step="any" placeholder="Ejemplo: -500, +200" value="-500" />
+    <div id="cuota1Decimal" class="cuota-display">🔁 Cuota decimal: —</div>
+
+    <label for="equipo2">Equipo 2</label>
+    <input type="text" id="equipo2" placeholder="Nombre del Equipo 2" />
+
+    <label for="cuota2">Momio Casa 2 (Americano)</label>
+    <input type="number" id="cuota2" step="any" placeholder="Ejemplo: -450, +150" value="200" />
+    <div id="cuota2Decimal" class="cuota-display">🔁 Cuota decimal: —</div>
 
     <label for="monto">Monto total a apostar (MXN)</label>
     <input type="number" id="monto" min="0.01" step="any" value="50000" />
@@ -137,6 +139,10 @@
     const cuota1Input = document.getElementById('cuota1');
     const cuota2Input = document.getElementById('cuota2');
     const montoInput = document.getElementById('monto');
+
+    const cuota1DecimalDisplay = document.getElementById('cuota1Decimal');
+    const cuota2DecimalDisplay = document.getElementById('cuota2Decimal');
+
     const resultadoDiv = document.getElementById('resultado');
     const apuesta1Span = document.getElementById('apuesta1');
     const apuesta2Span = document.getElementById('apuesta2');
@@ -158,20 +164,40 @@
       }
     }
 
+    // Convierte momio americano (positivo o negativo) a decimal
+    function americanoADecimal(momio) {
+      if (momio === 0 || isNaN(momio)) return NaN;
+      if (momio > 0) {
+        return (momio / 100) + 1;
+      } else {
+        return (100 / Math.abs(momio)) + 1;
+      }
+    }
+
     function calcularSurebet() {
-      const cuota1 = parseFloat(cuota1Input.value);
-      const cuota2 = parseFloat(cuota2Input.value);
+      // Momios en americano
+      const momio1Americano = parseFloat(cuota1Input.value);
+      const momio2Americano = parseFloat(cuota2Input.value);
       const montoTotal = parseFloat(montoInput.value);
 
-      if (isNaN(cuota1) || cuota1 <= 0) {
+      // Convertir a decimal para cálculos
+      const cuota1Decimal = americanoADecimal(momio1Americano);
+      const cuota2Decimal = americanoADecimal(momio2Americano);
+
+      // Mostrar cuotas decimales al usuario
+      cuota1DecimalDisplay.textContent = isNaN(cuota1Decimal) ? "🔁 Cuota decimal: —" : `🔁 Cuota decimal: ${formatearNumero(cuota1Decimal)}`;
+      cuota2DecimalDisplay.textContent = isNaN(cuota2Decimal) ? "🔁 Cuota decimal: —" : `🔁 Cuota decimal: ${formatearNumero(cuota2Decimal)}`;
+
+      // Validar inputs
+      if (isNaN(cuota1Decimal) || cuota1Decimal <= 1) {
         resultadoDiv.style.display = 'none';
-        mensajeDiv.textContent = "La cuota Casa 1 debe ser mayor que 0.";
+        mensajeDiv.textContent = "La cuota decimal derivada de Casa 1 no es válida.";
         mensajeDiv.className = "mensaje rojo";
         return;
       }
-      if (isNaN(cuota2) || cuota2 <= 0) {
+      if (isNaN(cuota2Decimal) || cuota2Decimal <= 1) {
         resultadoDiv.style.display = 'none';
-        mensajeDiv.textContent = "La cuota Casa 2 debe ser mayor que 0.";
+        mensajeDiv.textContent = "La cuota decimal derivada de Casa 2 no es válida.";
         mensajeDiv.className = "mensaje rojo";
         return;
       }
@@ -182,40 +208,33 @@
         return;
       }
 
-      const inv1 = 1 / cuota1;
-      const inv2 = 1 / cuota2;
+      // Cálculo surebet (con cuotas decimales)
+      const inv1 = 1 / cuota1Decimal;
+      const inv2 = 1 / cuota2Decimal;
       const sumaInv = inv1 + inv2;
 
       const apuesta1 = montoTotal * inv1 / sumaInv;
       const apuesta2 = montoTotal * inv2 / sumaInv;
 
-      const retorno1 = apuesta1 * cuota1;
-      const retorno2 = apuesta2 * cuota2;
+      const retorno1 = apuesta1 * cuota1Decimal;
+      const retorno2 = apuesta2 * cuota2Decimal;
 
       const gananciaNeta = Math.min(retorno1, retorno2) - montoTotal;
       const porcentajeGanancia = (gananciaNeta / montoTotal) * 100;
 
+      // Mostrar resultados
       apuesta1Span.textContent = formatearNumero(apuesta1);
-      asignarColor(apuesta1Span, apuesta1);
-
       apuesta2Span.textContent = formatearNumero(apuesta2);
-      asignarColor(apuesta2Span, apuesta2);
-
       ganancia1Span.textContent = formatearNumero(retorno1);
       ganancia2Span.textContent = formatearNumero(retorno2);
-
-      if (gananciaNeta < 0) {
-        ganancia1Span.className = "highlight rojo";
-        ganancia2Span.className = "highlight rojo";
-      } else {
-        asignarColor(ganancia1Span, retorno1);
-        asignarColor(ganancia2Span, retorno2);
-      }
-
       gananciaNetaSpan.textContent = formatearNumero(gananciaNeta);
-      asignarColor(gananciaNetaSpan, gananciaNeta);
-
       porcentajeSpan.textContent = formatearNumero(porcentajeGanancia) + " %";
+
+      asignarColor(apuesta1Span, apuesta1);
+      asignarColor(apuesta2Span, apuesta2);
+      asignarColor(ganancia1Span, retorno1);
+      asignarColor(ganancia2Span, retorno2);
+      asignarColor(gananciaNetaSpan, gananciaNeta);
       asignarColor(porcentajeSpan, porcentajeGanancia);
 
       if (gananciaNeta >= 0) {
