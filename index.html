@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Calculadora exortipster</title>
+  <title>Calculadora Exortipster</title>
   <style>
     :root {
       --verde-bet: #0b3d0b;
@@ -104,21 +104,21 @@
 </head>
 <body>
   <div class="container">
-    <h1>Calculadora exortipster</h1>
+    <h1>Calculadora Exortipster</h1>
 
     <label for="equipo1">Equipo 1</label>
     <input type="text" id="equipo1" placeholder="Nombre del Equipo 1" />
 
-    <label for="cuota1">Momio Casa 1 (Americano)</label>
-    <input type="number" id="cuota1" step="any" placeholder="Ejemplo: -500, +200" value="-500" />
-    <div id="cuota1Decimal" class="cuota-display">🔁 Cuota decimal: —</div>
+    <label for="cuota1">Cuota 1 (Americana o Decimal)</label>
+    <input type="number" id="cuota1" step="any" placeholder="Ej: -500 o 1.91" />
+    <div id="cuota1Decimal" class="cuota-display">🔁 Conversión: —</div>
 
     <label for="equipo2">Equipo 2</label>
     <input type="text" id="equipo2" placeholder="Nombre del Equipo 2" />
 
-    <label for="cuota2">Momio Casa 2 (Americano)</label>
-    <input type="number" id="cuota2" step="any" placeholder="Ejemplo: -450, +150" value="200" />
-    <div id="cuota2Decimal" class="cuota-display">🔁 Cuota decimal: —</div>
+    <label for="cuota2">Cuota 2 (Americana o Decimal)</label>
+    <input type="number" id="cuota2" step="any" placeholder="Ej: +200 o 2.5" />
+    <div id="cuota2Decimal" class="cuota-display">🔁 Conversión: —</div>
 
     <label for="monto">Monto total a apostar (MXN)</label>
     <input type="number" id="monto" min="0.01" step="any" value="50000" />
@@ -164,43 +164,64 @@
       }
     }
 
-    // Convierte momio americano (positivo o negativo) a decimal
     function americanoADecimal(momio) {
       if (momio === 0 || isNaN(momio)) return NaN;
-      if (momio > 0) {
-        return (momio / 100) + 1;
-      } else {
-        return (100 / Math.abs(momio)) + 1;
-      }
+      if (momio > 0) return (momio / 100) + 1;
+      return (100 / Math.abs(momio)) + 1;
+    }
+
+    function decimalAAmericano(decimal) {
+      if (decimal < 1.01 || isNaN(decimal)) return NaN;
+      if (decimal >= 2) return Math.round((decimal - 1) * 100);
+      return Math.round(-100 / (decimal - 1));
     }
 
     function calcularSurebet() {
-      // Momios en americano
-      const momio1Americano = parseFloat(cuota1Input.value);
-      const momio2Americano = parseFloat(cuota2Input.value);
+      const momio1 = parseFloat(cuota1Input.value);
+      const momio2 = parseFloat(cuota2Input.value);
       const montoTotal = parseFloat(montoInput.value);
 
-      // Convertir a decimal para cálculos
-      const cuota1Decimal = americanoADecimal(momio1Americano);
-      const cuota2Decimal = americanoADecimal(momio2Americano);
+      if (!isNaN(momio1)) {
+        if (Math.abs(momio1) >= 100) {
+          const decimal = americanoADecimal(momio1);
+          cuota1DecimalDisplay.textContent = isNaN(decimal) ? "🔁 Conversión: —" : `🔁 Cuota decimal: ${formatearNumero(decimal)}`;
+        } else if (momio1 > 1) {
+          const americano = decimalAAmericano(momio1);
+          cuota1DecimalDisplay.textContent = isNaN(americano) ? "🔁 Conversión: —" : `🔁 Momio americano: ${americano > 0 ? "+" : ""}${americano}`;
+        } else {
+          cuota1DecimalDisplay.textContent = "🔁 Formato no válido";
+        }
+      }
 
-      // Mostrar cuotas decimales al usuario
-      cuota1DecimalDisplay.textContent = isNaN(cuota1Decimal) ? "🔁 Cuota decimal: —" : `🔁 Cuota decimal: ${formatearNumero(cuota1Decimal)}`;
-      cuota2DecimalDisplay.textContent = isNaN(cuota2Decimal) ? "🔁 Cuota decimal: —" : `🔁 Cuota decimal: ${formatearNumero(cuota2Decimal)}`;
+      if (!isNaN(momio2)) {
+        if (Math.abs(momio2) >= 100) {
+          const decimal = americanoADecimal(momio2);
+          cuota2DecimalDisplay.textContent = isNaN(decimal) ? "🔁 Conversión: —" : `🔁 Cuota decimal: ${formatearNumero(decimal)}`;
+        } else if (momio2 > 1) {
+          const americano = decimalAAmericano(momio2);
+          cuota2DecimalDisplay.textContent = isNaN(americano) ? "🔁 Conversión: —" : `🔁 Momio americano: ${americano > 0 ? "+" : ""}${americano}`;
+        } else {
+          cuota2DecimalDisplay.textContent = "🔁 Formato no válido";
+        }
+      }
 
-      // Validar inputs
+      const cuota1Decimal = Math.abs(momio1) >= 100 ? americanoADecimal(momio1) : momio1;
+      const cuota2Decimal = Math.abs(momio2) >= 100 ? americanoADecimal(momio2) : momio2;
+
       if (isNaN(cuota1Decimal) || cuota1Decimal <= 1) {
         resultadoDiv.style.display = 'none';
-        mensajeDiv.textContent = "La cuota decimal derivada de Casa 1 no es válida.";
+        mensajeDiv.textContent = "La cuota de Casa 1 no es válida.";
         mensajeDiv.className = "mensaje rojo";
         return;
       }
+
       if (isNaN(cuota2Decimal) || cuota2Decimal <= 1) {
         resultadoDiv.style.display = 'none';
-        mensajeDiv.textContent = "La cuota decimal derivada de Casa 2 no es válida.";
+        mensajeDiv.textContent = "La cuota de Casa 2 no es válida.";
         mensajeDiv.className = "mensaje rojo";
         return;
       }
+
       if (isNaN(montoTotal) || montoTotal <= 0) {
         resultadoDiv.style.display = 'none';
         mensajeDiv.textContent = "El monto total debe ser mayor que 0.";
@@ -208,7 +229,6 @@
         return;
       }
 
-      // Cálculo surebet (con cuotas decimales)
       const inv1 = 1 / cuota1Decimal;
       const inv2 = 1 / cuota2Decimal;
       const sumaInv = inv1 + inv2;
@@ -222,7 +242,6 @@
       const gananciaNeta = Math.min(retorno1, retorno2) - montoTotal;
       const porcentajeGanancia = (gananciaNeta / montoTotal) * 100;
 
-      // Mostrar resultados
       apuesta1Span.textContent = formatearNumero(apuesta1);
       apuesta2Span.textContent = formatearNumero(apuesta2);
       ganancia1Span.textContent = formatearNumero(retorno1);
@@ -237,19 +256,21 @@
       asignarColor(gananciaNetaSpan, gananciaNeta);
       asignarColor(porcentajeSpan, porcentajeGanancia);
 
-      if (gananciaNeta >= 0) {
-        mensajeDiv.textContent = "✔️ Existen ganancias posibles con estos momios.";
-        mensajeDiv.className = "mensaje verde";
-      } else {
-        mensajeDiv.textContent = "❌ No hay ganancias posibles con estos momios.";
-        mensajeDiv.className = "mensaje rojo";
-      }
+      mensajeDiv.textContent = gananciaNeta >= 0
+        ? "✔️ Existen ganancias posibles con estos momios."
+        : "❌ No hay ganancias posibles con estos momios.";
+      mensajeDiv.className = gananciaNeta >= 0 ? "mensaje verde" : "mensaje rojo";
 
       resultadoDiv.style.display = 'block';
     }
 
     function copiarResultados() {
+      const equipo1 = document.getElementById('equipo1').value || "Equipo 1";
+      const equipo2 = document.getElementById('equipo2').value || "Equipo 2";
+
       const texto = `
+${equipo1} vs ${equipo2}
+
 Fondos apostados en Casa 1: ${apuesta1Span.textContent} MXN
 Fondos apostados en Casa 2: ${apuesta2Span.textContent} MXN
 Fondos ganados si gana Casa 1: ${ganancia1Span.textContent} MXN
